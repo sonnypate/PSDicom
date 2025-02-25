@@ -10,14 +10,15 @@ using System.Collections.ObjectModel;
 using Serilog;
 using FellowOakDicom.Network.Client.EventArguments;
 using PSDicom.DICOM;
+using System.Management.Automation;
 
-namespace MWL_Tester.DICOM
+namespace PSDicom.DICOM
 {
     internal class WorklistQuery
     {
         private ILogger _logger;
 
-        public ObservableCollection<WorklistResponse> WorklistResponses { get; set; } = new ObservableCollection<WorklistResponse>();
+        public List<WorklistResponse> WorklistResponses { get; set; } = new List<WorklistResponse>();
 
         public WorklistQuery()
         {
