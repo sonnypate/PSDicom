@@ -1,16 +1,7 @@
-﻿using FellowOakDicom.Network.Client;
+﻿using FellowOakDicom;
 using FellowOakDicom.Network;
-using FellowOakDicom;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Collections.ObjectModel;
+using FellowOakDicom.Network.Client;
 using Serilog;
-using FellowOakDicom.Network.Client.EventArguments;
-using PSDicom.DICOM;
-using System.Management.Automation;
 
 namespace PSDicom.DICOM
 {

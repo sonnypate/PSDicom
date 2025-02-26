@@ -1,5 +1,5 @@
 ﻿using FellowOakDicom.Network.Client;
-using MWL_Tester.DICOM;
+using PSDicom.DICOM;
 
 namespace PSDicom.DICOM
 {

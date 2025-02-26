@@ -1,9 +1,5 @@
 ﻿using FellowOakDicom;
 using FellowOakDicom.Network;
-using FellowOakDicom.Network.Client;
-using FellowOakDicom.Network.Client.EventArguments;
-using Microsoft.Extensions.DependencyInjection;
-using MWL_Tester.DICOM;
 using PSDicom.DICOM;
 using Serilog;
 using System.Management.Automation;
@@ -46,8 +42,6 @@ namespace PSDicom
             }
 
             _logger.Information("Hello, world!");
-
-
         }
 
         protected override void ProcessRecord()
@@ -56,7 +50,16 @@ namespace PSDicom
             WorklistQuery worklistQuery = new WorklistQuery();
 
             var cancellationToken = new System.Threading.CancellationToken();
-            
+
+            WriteObject(_worklistQuery.WorklistResponses);
+        }
+
+        protected override void EndProcessing()
+        {
+            base.EndProcessing();
+
+            // Clean up logging before shutting down.
+            Log.CloseAndFlush();
         }
 
         private async Task PerformWorklistQuery(CancellationToken cancellationToken)
