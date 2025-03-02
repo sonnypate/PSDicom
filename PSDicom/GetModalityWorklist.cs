@@ -11,30 +11,66 @@ namespace PSDicom
     public class GetModalityWorklist : Cmdlet
     {
         private ILogger _logger = Log.ForContext<GetModalityWorklist>();
-        private readonly WorklistQuery _worklistQuery = new WorklistQuery();
-        private IEnumerable<WorklistResponse> WorklistResponses = new List<WorklistResponse>();
+        CancellationTokenSource _cts = new CancellationTokenSource();
 
         // Inputs:
         [Parameter(
             Mandatory = true,
             ValueFromPipeline = true,
             ValueFromPipelineByPropertyName = true,
-            Position = 1,
+            Position = 0,
             HelpMessage = "Connection details: IP address, port, calling AET, and called AET.")]
         public required Connection Connection { get; set; }
+        [Parameter(
+            Position = 1,
+            HelpMessage = "Patient ID.")]
         public string? PatientId { get; set; }
+        [Parameter(
+            Position = 2,
+            HelpMessage = "Patient name.")]
         public string? PatientName { get; set; }
+        [Parameter(
+            Position = 3,
+            HelpMessage = "Station AE title.")]
         public string? StationAet { get; set; }
+        [Parameter(
+            Position = 4,
+            HelpMessage = "Station name.")]
         public string? StationName { get; set; }
+        [Parameter(
+            Position = 5,
+            HelpMessage = "Modality.")]
         public string? Modality { get; set; }
+        [Parameter(
+            Position = 6,
+            HelpMessage = "Start date.")]
         public DateTime StartDate { get; set; }
+        [Parameter(
+            Position = 7,
+            HelpMessage = "End date.")]
         public DateTime EndDate { get; set; }
+        
         // LogPath will use Serilog to log to a file.
+        [Parameter(
+            Position = 8,
+            HelpMessage = "Log file path.")]
         public string? LogPath { get; set; }
+        
+        // LogDimseDataset and LogDataPDUs will log the DICOM dataset and data PDUs.
+        [Parameter(
+            Position = 9,
+            HelpMessage = "Log DICOM dataset.")]
+        public SwitchParameter LogDimseDataset { get; set; } = false;
+        [Parameter(
+            Position = 10,
+            HelpMessage = "Log data PDUs.")]
+        public SwitchParameter LogDataPDUs { get; set; } = false;
 
         protected override void BeginProcessing()
         {
             base.BeginProcessing();
+
+            _cts = new CancellationTokenSource();
 
             if (!string.IsNullOrEmpty(LogPath))
             {
@@ -49,9 +85,25 @@ namespace PSDicom
             base.ProcessRecord();
             WorklistQuery worklistQuery = new WorklistQuery();
 
-            var cancellationToken = new System.Threading.CancellationToken();
+            try
+            {
+                var client = new Client(Connection).GetDicomClient();
+                client.ServiceOptions.LogDimseDatasets = LogDimseDataset;
+                client.ServiceOptions.LogDataPDUs = LogDataPDUs;
 
-            WriteObject(_worklistQuery.WorklistResponses);
+                var request = CreateCFindRequest();
+                Task<List<DicomDataset>> task = worklistQuery.PerformWorklistQuery(client, request, _cts.Token);
+                task.Wait();
+                List<DicomDataset> dataset = task.Result;
+                worklistQuery.GetWorklistValuesFromDataset(dataset);
+            }
+            catch (AggregateException ex)
+            {
+                Log.Error("Error: {exception}", ex);
+                return;
+            }
+
+            WriteObject(worklistQuery.WorklistResponses);
         }
 
         protected override void EndProcessing()
@@ -62,7 +114,16 @@ namespace PSDicom
             Log.CloseAndFlush();
         }
 
-        private async Task PerformWorklistQuery(CancellationToken cancellationToken)
+        protected override void StopProcessing()
+        {
+            base.StopProcessing();
+            _cts.Cancel();
+
+            // Clean up logging before shutting down.
+            Log.CloseAndFlush();
+        }
+
+        private DicomCFindRequest CreateCFindRequest()
         {
 
             WriteVerbose("Starting worklist query");
@@ -101,18 +162,7 @@ namespace PSDicom
                 }
             }
 
-            try
-            {
-                var client = new Client(Connection).GetDicomClient();
-
-                var dataset = await _worklistQuery.PerformWorklistQuery(client, request, cancellationToken);
-                _worklistQuery.GetWorklistValuesFromDataset(dataset);
-            }
-            catch (AggregateException ex)
-            {
-                Log.Error("Error: {exception}", ex);
-                return;
-            }
+            return request;
         }
     }
 }

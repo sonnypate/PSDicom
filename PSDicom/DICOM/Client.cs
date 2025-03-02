@@ -21,10 +21,6 @@ namespace PSDicom.DICOM
                 _connection.CallingAET,
                 _connection.CalledAET);
 
-            // Additional logging for debug:
-            client.ServiceOptions.LogDimseDatasets = true;
-            client.ServiceOptions.LogDataPDUs = true;
-
             return client;
         }
     }
