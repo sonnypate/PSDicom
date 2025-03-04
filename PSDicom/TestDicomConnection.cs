@@ -2,6 +2,7 @@
 using FellowOakDicom.Network.Client;
 using PSDicom.DICOM;
 using Serilog;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Management.Automation;
 
@@ -12,7 +13,6 @@ namespace PSDicom
     {
         private ILogger _logger = Log.ForContext<TestDicomConnection>();
         CancellationTokenSource _cts = new CancellationTokenSource();
-
 
         [Parameter(
             Mandatory = true,
@@ -56,8 +56,11 @@ namespace PSDicom
 
             try
             {
-                PerformConnectionTest(_cts.Token).Wait();
+                var response = PerformConnectionTest(_cts.Token);
+                response.Wait();
                 WriteVerbose($"Connection to '{Connection.CalledAET}' was successful.");
+
+                WriteObject(response.Result);
             }
             catch (Exception ex)
             {
@@ -93,60 +96,42 @@ namespace PSDicom
             Log.CloseAndFlush();
         }
 
-        private async Task PerformConnectionTest(CancellationToken cancellationToken)
+        private async Task<DicomConnectionResponse> PerformConnectionTest(CancellationToken cancellationToken)
         {
             _logger.Information("Starting C-Echo");
 
             var client = new Client(Connection).GetDicomClient();
+            var dicomCEchoRequest = new DicomCEchoRequest();
             client.ServiceOptions.LogDimseDatasets = LogDimseDataset;
             client.ServiceOptions.LogDataPDUs = LogDataPDUs;
+            var dicomConnectionResponse = new DicomConnectionResponse()
+            {
+                CallingAET = Connection.CallingAET,
+                CalledAET = Connection.CalledAET,
+                CalledHost = Connection.CalledHost,
+                Port = Connection.Port,
+                Status = DicomStatus.ProcessingFailure.ToString()
+            };
+
+            dicomCEchoRequest.OnResponseReceived += (request, response) =>
+            {
+                dicomConnectionResponse.Status = response.Status.ToString();
+            };
 
             client.AssociationAccepted += (sender, args) =>
             {
-                _logger.Information("Association accepted");
-
-                var response = new DicomConnectionResponse() { 
-                    CallingAET = Connection.CallingAET,
-                    CalledAET = Connection.CalledAET,
-                    CalledHost = Connection.CalledHost,
-                    Port = Connection.Port,
-                    Status = "Association accepted"
-                };
-
-
+                _logger.Verbose($"Association to '{Connection.CalledAET}' accepted.");
             };
 
             client.AssociationRejected += (sender, args) =>
             {
-                _logger.Error("Association rejected: {reason}", args.Reason);
-
-                var response = new DicomConnectionResponse()
-                {
-                    CallingAET = Connection.CallingAET,
-                    CalledAET = Connection.CalledAET,
-                    CalledHost = Connection.CalledHost,
-                    Port = Connection.Port,
-                    Status = "Association accepted"
-                };
-
-
+                _logger.Verbose($"Association to '{Connection.CalledAET}' rejected.");
             };
 
-                client.AssociationReleased += (sender, args) =>
-                {
-                    _logger.Information("Association released");
-
-                    var response = new DicomConnectionResponse()
-                    {
-                        CallingAET = Connection.CallingAET,
-                        CalledAET = Connection.CalledAET,
-                        CalledHost = Connection.CalledHost,
-                        Port = Connection.Port,
-                        Status = "Association accepted"
-                    };
-
-
-                };
+            client.AssociationReleased += (sender, args) =>
+            {
+                _logger.Verbose($"Association to '{Connection.CalledAET}' released.");
+            };
 
             try
             {
@@ -154,9 +139,7 @@ namespace PSDicom
 
                 for (int i = 0; i < 10; i++)
                 {
-                    ProgressRecord progressRecord = new(1, "Testing connection", $"Sending C-Echo request {i + 1} of 10");
-                    WriteProgress(progressRecord);
-                    await client.AddRequestAsync(new DicomCEchoRequest());
+                    await client.AddRequestAsync(dicomCEchoRequest);
                 }
 
                 await client.SendAsync(cancellationToken);
@@ -166,6 +149,8 @@ namespace PSDicom
                 _logger.Error("Error: {exception}", ex);
                 throw;
             }
+
+            return dicomConnectionResponse;
         }
     }
 }
