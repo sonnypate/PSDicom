@@ -1,9 +1,6 @@
 ﻿using FellowOakDicom.Network;
-using FellowOakDicom.Network.Client;
 using PSDicom.DICOM;
 using Serilog;
-using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.Management.Automation;
 
 namespace PSDicom
@@ -13,6 +10,7 @@ namespace PSDicom
     {
         private ILogger _logger = Log.ForContext<TestDicomConnection>();
         CancellationTokenSource _cts = new CancellationTokenSource();
+        private int _timeout = 30;
 
         [Parameter(
             Mandatory = true,
@@ -37,10 +35,23 @@ namespace PSDicom
             HelpMessage = "Log data PDUs.")]
         public SwitchParameter LogDataPDUs { get; set; } = false;
 
+        [Parameter(Position = 4)]
+        [ValidateRange(1, 60)]
+        public int Timeout
+        {
+            get { return _timeout; }
+            set { _timeout = value * 100; }
+        }
+
+        [Parameter(Position = 5)]
+        [ValidateRange(1, 10)]
+        public int Attempts { get; set; } = 1;
+
         protected override void BeginProcessing()
         {
             base.BeginProcessing();
             _cts = new CancellationTokenSource();
+            _cts.CancelAfter(30000);
 
             if (!string.IsNullOrEmpty(LogPath))
             {
@@ -54,50 +65,6 @@ namespace PSDicom
         {
             base.ProcessRecord();
 
-            try
-            {
-                var response = PerformConnectionTest(_cts.Token);
-                response.Wait();
-                WriteVerbose($"Connection to '{Connection.CalledAET}' was successful.");
-
-                WriteObject(response.Result);
-            }
-            catch (Exception ex)
-            {
-                WriteError(new ErrorRecord(ex, "Error", ErrorCategory.NotSpecified, Connection));
-            }
-
-            // If timed out, cancel the request.
-            if (_cts.Token.IsCancellationRequested)
-            {
-                WriteVerbose("Test cancelled");
-                return;
-            }
-            else
-            {
-                WriteVerbose($"Connection to '{Connection.CalledAET}' was successful.");
-            }
-        }
-
-        protected override void EndProcessing()
-        {
-            base.EndProcessing();
-
-            // Clean up logging before shutting down.
-            Log.CloseAndFlush();
-        }
-
-        protected override void StopProcessing()
-        {
-            base.StopProcessing();
-            _cts.Cancel();
-
-            // Clean up logging before shutting down.
-            Log.CloseAndFlush();
-        }
-
-        private async Task<DicomConnectionResponse> PerformConnectionTest(CancellationToken cancellationToken)
-        {
             _logger.Information("Starting C-Echo");
 
             var client = new Client(Connection).GetDicomClient();
@@ -137,20 +104,51 @@ namespace PSDicom
             {
                 client.NegotiateAsyncOps();
 
-                for (int i = 0; i < 10; i++)
+                for (int i = 0; i < Attempts; i++)
                 {
-                    await client.AddRequestAsync(dicomCEchoRequest);
+                    WriteProgress(new ProgressRecord(1, "Testing DICOM connection", $"Attempt {i + 1}"));
+                    
+                    dicomConnectionResponse.Attempt = i + 1;
+                    dicomConnectionResponse.Status = DicomStatus.ProcessingFailure.ToString();
+                    client.AddRequestAsync(dicomCEchoRequest).Wait();
+                    client.SendAsync(_cts.Token).Wait();
+                    WriteObject(dicomConnectionResponse);
                 }
-
-                await client.SendAsync(cancellationToken);
+                WriteVerbose($"Connection to '{Connection.CalledAET}' was successful.");
             }
             catch (AggregateException ex)
             {
                 _logger.Error("Error: {exception}", ex);
-                throw;
+                WriteError(new ErrorRecord(ex, "Error", ErrorCategory.NotSpecified, Connection));
             }
 
-            return dicomConnectionResponse;
+            // If timed out, cancel the request.
+            if (_cts.Token.IsCancellationRequested)
+            {
+                WriteVerbose("Test cancelled");
+                return;
+            }
+            else
+            {
+                WriteVerbose($"Connection to '{Connection.CalledAET}' was successful.");
+            }
+        }
+
+        protected override void EndProcessing()
+        {
+            base.EndProcessing();
+
+            // Clean up logging before shutting down.
+            Log.CloseAndFlush();
+        }
+
+        protected override void StopProcessing()
+        {
+            base.StopProcessing();
+            _cts.Cancel();
+
+            // Clean up logging before shutting down.
+            Log.CloseAndFlush();
         }
     }
 }

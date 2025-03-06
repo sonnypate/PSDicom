@@ -8,6 +8,7 @@ namespace PSDicom.DICOM
 {
     internal class DicomConnectionResponse
     {
+        public int Attempt { get; set; } = 0;
         public string CallingAET { get; set; } = string.Empty;
         public string CalledHost { get; set; } = string.Empty;
         public string CalledAET { get; set; } = string.Empty;
