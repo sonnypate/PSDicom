@@ -8,7 +8,6 @@ namespace PSDicom
     [Cmdlet(VerbsDiagnostic.Test, "DicomConnection")]
     public class TestDicomConnection : Cmdlet
     {
-        private ILogger _logger = Log.ForContext<TestDicomConnection>();
         CancellationTokenSource _cts = new CancellationTokenSource();
         private int _timeout = 30;
 
@@ -56,16 +55,16 @@ namespace PSDicom
             if (!string.IsNullOrEmpty(LogPath))
             {
                 Logging.ConfigureLogging(LogPath);
+                Log.Information("Logging configured");
+                WriteVerbose($"Logging to {LogPath}");
             }
-
-            _logger.Information("Logging configured");
         }
 
         protected override void ProcessRecord()
         {
             base.ProcessRecord();
 
-            _logger.Information("Starting C-Echo");
+            Log.Information("Starting C-Echo");
 
             var client = new Client(Connection).GetDicomClient();
             var dicomCEchoRequest = new DicomCEchoRequest();
@@ -87,17 +86,17 @@ namespace PSDicom
 
             client.AssociationAccepted += (sender, args) =>
             {
-                _logger.Verbose($"Association to '{Connection.CalledAET}' accepted.");
+                Log.Verbose($"Association to '{Connection.CalledAET}' accepted.");
             };
 
             client.AssociationRejected += (sender, args) =>
             {
-                _logger.Verbose($"Association to '{Connection.CalledAET}' rejected.");
+                Log.Verbose($"Association to '{Connection.CalledAET}' rejected.");
             };
 
             client.AssociationReleased += (sender, args) =>
             {
-                _logger.Verbose($"Association to '{Connection.CalledAET}' released.");
+                Log.Verbose($"Association to '{Connection.CalledAET}' released.");
             };
 
             try
@@ -118,7 +117,7 @@ namespace PSDicom
             }
             catch (AggregateException ex)
             {
-                _logger.Error("Error: {exception}", ex);
+                Log.Error("Error: {exception}", ex);
                 WriteError(new ErrorRecord(ex, "Error", ErrorCategory.NotSpecified, Connection));
             }
 

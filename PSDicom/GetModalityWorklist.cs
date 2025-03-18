@@ -10,7 +10,6 @@ namespace PSDicom
     [OutputType(typeof(WorklistResponse))]
     public class GetModalityWorklist : Cmdlet
     {
-        private ILogger _logger = Log.ForContext<GetModalityWorklist>();
         CancellationTokenSource _cts = new CancellationTokenSource();
 
         // Inputs:
@@ -75,9 +74,9 @@ namespace PSDicom
             if (!string.IsNullOrEmpty(LogPath))
             {
                 Logging.ConfigureLogging(LogPath);
+                Log.Information("Logging configured.");
+                WriteVerbose($"Logging to {LogPath}");
             }
-
-            _logger.Information("Hello, world!");
         }
 
         protected override void ProcessRecord()
