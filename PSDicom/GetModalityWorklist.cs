@@ -52,16 +52,19 @@ namespace PSDicom
         // LogPath will use Serilog to log to a file.
         [Parameter(
             Position = 8,
+            ParameterSetName = "FileLog",
             HelpMessage = "Log file path.")]
         public string? LogPath { get; set; }
         
         // LogDimseDataset and LogDataPDUs will log the DICOM dataset and data PDUs.
         [Parameter(
             Position = 9,
+            ParameterSetName = "FileLog",
             HelpMessage = "Log DICOM dataset.")]
         public SwitchParameter LogDimseDataset { get; set; } = false;
         [Parameter(
             Position = 10,
+            ParameterSetName = "FileLog",
             HelpMessage = "Log data PDUs.")]
         public SwitchParameter LogDataPDUs { get; set; } = false;
 

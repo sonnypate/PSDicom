@@ -21,16 +21,19 @@ namespace PSDicom
 
         [Parameter(
             Position = 1,
+            ParameterSetName = "FileLog",
             HelpMessage = "Log file path.")]
         public string? LogPath { get; set; }
 
         // LogDimseDataset and LogDataPDUs will log the DICOM dataset and data PDUs.
         [Parameter(
             Position = 2,
+            ParameterSetName = "FileLog",
             HelpMessage = "Log DICOM dataset.")]
         public SwitchParameter LogDimseDataset { get; set; } = false;
         [Parameter(
             Position = 3,
+            ParameterSetName = "FileLog",
             HelpMessage = "Log data PDUs.")]
         public SwitchParameter LogDataPDUs { get; set; } = false;
 
