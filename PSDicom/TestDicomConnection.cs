@@ -84,21 +84,6 @@ namespace PSDicom
                 dicomConnectionResponse.Status = response.Status.ToString();
             };
 
-            client.AssociationAccepted += (sender, args) =>
-            {
-                Log.Verbose($"Association to '{Connection.CalledAET}' accepted.");
-            };
-
-            client.AssociationRejected += (sender, args) =>
-            {
-                Log.Verbose($"Association to '{Connection.CalledAET}' rejected.");
-            };
-
-            client.AssociationReleased += (sender, args) =>
-            {
-                Log.Verbose($"Association to '{Connection.CalledAET}' released.");
-            };
-
             try
             {
                 client.NegotiateAsyncOps();
