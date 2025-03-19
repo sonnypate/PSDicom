@@ -3,7 +3,6 @@ using FellowOakDicom.Network;
 using PSDicom.DICOM;
 using Serilog;
 using System.Management.Automation;
-using System.Threading;
 
 namespace PSDicom
 {
