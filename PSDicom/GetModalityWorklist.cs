@@ -11,7 +11,7 @@ namespace PSDicom
     public class GetModalityWorklist : Cmdlet
     {
         CancellationTokenSource _cts = new CancellationTokenSource();
-        int _timeout = 30; // Default to 30 seconds.
+        int _timeout = 30000; // Default to 30 seconds.
 
         // Inputs:
         [Parameter(

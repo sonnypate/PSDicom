@@ -9,7 +9,7 @@ namespace PSDicom
     public class TestDicomConnection : Cmdlet
     {
         CancellationTokenSource _cts = new CancellationTokenSource();
-        private int _timeout = 30;
+        private int _timeout = 30000; // Default is 30 seconds.
 
         [Parameter(
             Mandatory = true,
