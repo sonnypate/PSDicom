@@ -1,5 +1,4 @@
 ﻿using FellowOakDicom.Network.Client;
-using PSDicom.DICOM;
 
 namespace PSDicom.DICOM
 {
