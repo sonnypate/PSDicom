@@ -21,7 +21,7 @@ namespace PSDicom
         public int Port { get; set; } = 104;
 
         [Parameter(
-            HelpMessage = "Use TLS for the connection.")]
+            HelpMessage = "Enable TLS for the connection.")]
         public bool UseTLS { get; set; } = false;
 
         [Parameter(
