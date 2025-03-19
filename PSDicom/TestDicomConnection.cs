@@ -37,15 +37,18 @@ namespace PSDicom
             HelpMessage = "Log data PDUs.")]
         public SwitchParameter LogDataPDUs { get; set; } = false;
 
-        [Parameter(Position = 4)]
+        [Parameter(Position = 4,
+            HelpMessage = "Timeout in seconds. Default is 30.")]
         [ValidateRange(1, 60)]
         public int Timeout
         {
             get { return _timeout; }
-            set { _timeout = value * 100; }
+            set { _timeout = value * 1000; }
         }
 
-        [Parameter(Position = 5)]
+        [Parameter(
+            Position = 5,
+            HelpMessage = "Number of c-echo attempts. Default is 1.")]
         [ValidateRange(1, 10)]
         public int Attempts { get; set; } = 1;
 
@@ -53,7 +56,7 @@ namespace PSDicom
         {
             base.BeginProcessing();
             _cts = new CancellationTokenSource();
-            _cts.CancelAfter(30000);
+            _cts.CancelAfter(Timeout);
 
             if (!string.IsNullOrEmpty(LogPath))
             {

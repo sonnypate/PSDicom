@@ -3,6 +3,7 @@ using FellowOakDicom.Network;
 using PSDicom.DICOM;
 using Serilog;
 using System.Management.Automation;
+using System.Threading;
 
 namespace PSDicom
 {
@@ -11,6 +12,7 @@ namespace PSDicom
     public class GetModalityWorklist : Cmdlet
     {
         CancellationTokenSource _cts = new CancellationTokenSource();
+        int _timeout = 30; // Default to 30 seconds.
 
         // Inputs:
         [Parameter(
@@ -20,30 +22,37 @@ namespace PSDicom
             Position = 0,
             HelpMessage = "Connection details: IP address, port, calling AET, and called AET.")]
         public required Connection Connection { get; set; }
+        
         [Parameter(
             Position = 1,
-            HelpMessage = "Patient ID.")]
+            HelpMessage = "Patient ID (MRN).")]
         public string? PatientId { get; set; }
+        
         [Parameter(
             Position = 2,
             HelpMessage = "Patient name.")]
         public string? PatientName { get; set; }
+        
         [Parameter(
             Position = 3,
             HelpMessage = "Station AE title.")]
         public string? StationAet { get; set; }
+        
         [Parameter(
             Position = 4,
             HelpMessage = "Station name.")]
         public string? StationName { get; set; }
+        
         [Parameter(
             Position = 5,
             HelpMessage = "Modality.")]
         public string? Modality { get; set; }
+        
         [Parameter(
             Position = 6,
             HelpMessage = "Start date.")]
         public DateTime StartDate { get; set; }
+        
         [Parameter(
             Position = 7,
             HelpMessage = "End date.")]
@@ -53,7 +62,7 @@ namespace PSDicom
         [Parameter(
             Position = 8,
             ParameterSetName = "FileLog",
-            HelpMessage = "Log file path.")]
+            HelpMessage = "Log file path. Include the filename and .log extension.")]
         public string? LogPath { get; set; }
         
         // LogDimseDataset and LogDataPDUs will log the DICOM dataset and data PDUs.
@@ -62,17 +71,29 @@ namespace PSDicom
             ParameterSetName = "FileLog",
             HelpMessage = "Log DICOM dataset.")]
         public SwitchParameter LogDimseDataset { get; set; } = false;
+        
         [Parameter(
             Position = 10,
             ParameterSetName = "FileLog",
             HelpMessage = "Log data PDUs.")]
         public SwitchParameter LogDataPDUs { get; set; } = false;
 
+        [Parameter(
+            Position = 11, 
+            HelpMessage = "Timeout in seconds. Default is 30.")]
+        [ValidateRange(1, 60)]
+        public int Timeout
+        {
+            get { return _timeout; }
+            set { _timeout = value * 1000; }
+        }
+
         protected override void BeginProcessing()
         {
             base.BeginProcessing();
 
             _cts = new CancellationTokenSource();
+            _cts.CancelAfter(Timeout);
 
             if (!string.IsNullOrEmpty(LogPath))
             {
@@ -103,6 +124,17 @@ namespace PSDicom
             {
                 Log.Error("Error: {exception}", ex);
                 return;
+            }
+
+            // If timed out, cancel the request.
+            if (_cts.Token.IsCancellationRequested)
+            {
+                WriteVerbose("Worklist query timed out.");
+                return;
+            }
+            else
+            {
+                WriteVerbose($"Connection to '{Connection.CalledAET}' was successful.");
             }
 
             WriteObject(worklistQuery.WorklistResponses);
