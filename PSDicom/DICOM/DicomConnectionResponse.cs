@@ -14,5 +14,6 @@ namespace PSDicom.DICOM
         public string CalledAET { get; set; } = string.Empty;
         public int Port { get; set; } = 0;
         public string Status { get; set; } = string.Empty;
+        public long Time { get; set; } = 0;
     }
 }

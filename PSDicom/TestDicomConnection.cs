@@ -1,6 +1,7 @@
 ﻿using FellowOakDicom.Network;
 using PSDicom.DICOM;
 using Serilog;
+using System.Diagnostics;
 using System.Management.Automation;
 
 namespace PSDicom
@@ -96,12 +97,18 @@ namespace PSDicom
 
                 for (int i = 0; i < Attempts; i++)
                 {
-                    WriteProgress(new ProgressRecord(1, "Testing DICOM connection", $"Attempt {i + 1}"));
+                    //WriteProgress(new ProgressRecord(1, "Testing DICOM connection", $"Attempt {i + 1}"));
                     
                     dicomConnectionResponse.Attempt = i + 1;
                     dicomConnectionResponse.Status = DicomStatus.ProcessingFailure.ToString();
+                    
                     client.AddRequestAsync(dicomCEchoRequest).Wait();
+                    
+                    Stopwatch stopwatch = Stopwatch.StartNew();
                     client.SendAsync(_cts.Token).Wait();
+                    stopwatch.Stop();
+                    dicomConnectionResponse.Time = stopwatch.ElapsedMilliseconds;
+                    
                     WriteObject(dicomConnectionResponse);
                 }
                 WriteVerbose($"Connection to '{Connection.CalledAET}' was successful.");
