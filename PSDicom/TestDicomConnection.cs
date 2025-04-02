@@ -7,6 +7,7 @@ using System.Management.Automation;
 namespace PSDicom
 {
     [Cmdlet(VerbsDiagnostic.Test, "DicomConnection")]
+    [OutputType(typeof(DicomConnectionResponse))]
     public class TestDicomConnection : Cmdlet
     {
         CancellationTokenSource _cts = new CancellationTokenSource();
