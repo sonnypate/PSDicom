@@ -17,25 +17,25 @@ namespace PSDicom
             ValueFromPipeline = true,
             ValueFromPipelineByPropertyName = true,
             Position = 0,
-            HelpMessage = "Connection details: IP address, port, calling AET, and called AET.")]
+            HelpMessage = "Connection object that contains the IP address, port, calling AET, and called AET. Use Get-DicomConnection to create the connection object.")]
         public required Connection Connection { get; set; }
 
         [Parameter(
             Position = 1,
             ParameterSetName = "FileLog",
-            HelpMessage = "Log file path.")]
+            HelpMessage = "The full path to the log file. Include the filename and extension.")]
         public string? LogPath { get; set; }
 
         // LogDimseDataset and LogDataPDUs will log the DICOM dataset and data PDUs.
         [Parameter(
             Position = 2,
             ParameterSetName = "FileLog",
-            HelpMessage = "Log DICOM dataset.")]
+            HelpMessage = "Enable the DICOM Message Service Element (DIMSE) dataset logging.")]
         public SwitchParameter LogDimseDataset { get; set; } = false;
         [Parameter(
             Position = 3,
             ParameterSetName = "FileLog",
-            HelpMessage = "Log data PDUs.")]
+            HelpMessage = "Enable the DICOM Protocol Data Unit (PDU) logging.")]
         public SwitchParameter LogDataPDUs { get; set; } = false;
 
         [Parameter(Position = 4,
