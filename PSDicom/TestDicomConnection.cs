@@ -32,11 +32,13 @@ namespace PSDicom
             Position = 2,
             ParameterSetName = "FileLog",
             HelpMessage = "Enable the DICOM Message Service Element (DIMSE) dataset logging.")]
+        
         public SwitchParameter LogDimseDataset { get; set; } = false;
         [Parameter(
             Position = 3,
             ParameterSetName = "FileLog",
             HelpMessage = "Enable the DICOM Protocol Data Unit (PDU) logging.")]
+        
         public SwitchParameter LogDataPDUs { get; set; } = false;
 
         [Parameter(Position = 4,
