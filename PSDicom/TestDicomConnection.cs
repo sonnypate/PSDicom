@@ -18,30 +18,23 @@ namespace PSDicom
             ValueFromPipeline = true,
             ValueFromPipelineByPropertyName = true,
             Position = 0,
-            HelpMessage = "Connection object that contains the IP address, port, calling AET, and called AET. Use Get-DicomConnection to create the connection object.")]
+            HelpMessage = "Connection object that contains the IP address or hostname, port, calling AET, and called AET. Use Get-DicomConnection to create the connection object.")]
         public required Connection Connection { get; set; }
 
         [Parameter(
-            Position = 1,
-            ParameterSetName = "FileLog",
             HelpMessage = "The full path to the log file. Include the filename and extension.")]
         public string? LogPath { get; set; }
 
         // LogDimseDataset and LogDataPDUs will log the DICOM dataset and data PDUs.
         [Parameter(
-            Position = 2,
-            ParameterSetName = "FileLog",
             HelpMessage = "Enable the DICOM Message Service Element (DIMSE) dataset logging.")]
-        
         public SwitchParameter LogDimseDataset { get; set; } = false;
-        [Parameter(
-            Position = 3,
-            ParameterSetName = "FileLog",
-            HelpMessage = "Enable the DICOM Protocol Data Unit (PDU) logging.")]
         
+        [Parameter(
+            HelpMessage = "Enable the DICOM Protocol Data Unit (PDU) logging.")]
         public SwitchParameter LogDataPDUs { get; set; } = false;
 
-        [Parameter(Position = 4,
+        [Parameter(
             HelpMessage = "Timeout in seconds. Default is 30.")]
         [ValidateRange(1, 60)]
         public int Timeout
@@ -51,7 +44,6 @@ namespace PSDicom
         }
 
         [Parameter(
-            Position = 5,
             HelpMessage = "Number of c-echo attempts. Default is 1.")]
         [ValidateRange(1, 10)]
         public int Attempts { get; set; } = 1;
@@ -100,8 +92,6 @@ namespace PSDicom
 
                 for (int i = 0; i < Attempts; i++)
                 {
-                    //WriteProgress(new ProgressRecord(1, "Testing DICOM connection", $"Attempt {i + 1}"));
-                    
                     dicomConnectionResponse.Attempt = i + 1;
                     dicomConnectionResponse.Status = DicomStatus.ProcessingFailure.ToString();
                     
