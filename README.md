@@ -4,7 +4,7 @@
 
 Various DICOM Powershell commands. All commands use the PSDicom.DICOM.Connection object to provide the connectivity details. The command list is basic now, but more commands are planned in the near future.
 
-PSDicom uses the excellent [Fellow Oak DICOM](#https://github.com/fo-dicom/fo-dicom) libary.
+PSDicom uses the excellent [Fellow Oak DICOM](https://github.com/fo-dicom/fo-dicom) libary.
 
 ## Contents
 
